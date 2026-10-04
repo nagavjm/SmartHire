@@ -30,16 +30,26 @@ stages:
             displayName: 'npm install and build'
 
           - task: PowerShell@2
-            displayName: 'List ClientApp directory (diagnostic)'
+            displayName: 'Stage Angular output (find index.html dynamically)'
             inputs:
               targetType: 'inline'
               script: |
-                Write-Host "Listing SmartHire/ClientApp recursively (top 3 levels):"
-                Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp" -Recurse -Depth 3 -Directory | Select-Object FullName
+                $indexFile = Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp/dist" -Recurse -Filter "index.html" | Select-Object -First 1
+                if (-not $indexFile) {
+                  Write-Error "index.html not found anywhere under SmartHire/ClientApp/dist"
+                  Write-Host "Listing SmartHire/ClientApp/dist recursively for debugging:"
+                  Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp/dist" -Recurse | Select-Object FullName
+                  exit 1
+                }
+                $sourceFolder = $indexFile.DirectoryName
+                Write-Host "Found Angular output at: $sourceFolder"
+                $stagingFolder = "$(Build.ArtifactStagingDirectory)/clientapp-dist"
+                New-Item -ItemType Directory -Force -Path $stagingFolder | Out-Null
+                Copy-Item -Path "$sourceFolder/*" -Destination $stagingFolder -Recurse -Force
 
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: 'SmartHire/ClientApp/dist/ClientApp'
+              targetPath: '$(Build.ArtifactStagingDirectory)/clientapp-dist'
               artifact: 'clientapp-dist'
             displayName: 'Publish Angular build output'
 
