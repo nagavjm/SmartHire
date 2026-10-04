@@ -24,8 +24,8 @@ stages:
             displayName: 'Install Node.js'
 
           - script: |
-              npm ci
-              npm run build
+              call npm ci
+              call npm run build
             workingDirectory: 'SmartHire/ClientApp'
             displayName: 'npm install and build'
 
