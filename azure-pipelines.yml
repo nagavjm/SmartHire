@@ -34,11 +34,18 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $indexFile = Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp/dist" -Recurse -Filter "index.html" | Select-Object -First 1
+                $clientAppRoot = "$(Build.SourcesDirectory)/SmartHire/ClientApp"
+                Write-Host "Full listing of $clientAppRoot (excluding node_modules):"
+                Get-ChildItem -Path $clientAppRoot -Recurse -File -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -notmatch '\\node_modules\\' } |
+                  Select-Object -ExpandProperty FullName
+
+                $indexFile = Get-ChildItem -Path $clientAppRoot -Recurse -Filter "index.html" -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -notmatch '\\node_modules\\' -and $_.FullName -notmatch '\\src\\' } |
+                  Select-Object -First 1
+
                 if (-not $indexFile) {
-                  Write-Error "index.html not found anywhere under SmartHire/ClientApp/dist"
-                  Write-Host "Listing SmartHire/ClientApp/dist recursively for debugging:"
-                  Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp/dist" -Recurse | Select-Object FullName
+                  Write-Error "index.html not found anywhere under $clientAppRoot (outside node_modules/src)"
                   exit 1
                 }
                 $sourceFolder = $indexFile.DirectoryName
