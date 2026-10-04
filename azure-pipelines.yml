@@ -1,0 +1,120 @@
+trigger:
+  branches:
+    include:
+      - develop   # change to your dev branch name
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  azureSubscription: 'sc-smarthire-dev'   # name of the service connection you created
+  smartHireAppName: 'smarthire-dev-ngn2026-1'
+  scimAppName: 'smarthire-scim-provisioning-dev-ngn2026-1'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAngular
+        displayName: 'Build Angular ClientApp'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+            displayName: 'Install Node.js'
+
+          - script: |
+              npm ci
+              npm run build
+            workingDirectory: 'SmartHire/ClientApp'
+            displayName: 'npm install and build'
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'SmartHire/ClientApp/dist/ClientApp/browser'
+              artifact: 'clientapp-dist'
+            displayName: 'Publish Angular build output'
+
+      - job: BuildSmartHire
+        displayName: 'Build SmartHire (.NET)'
+        dependsOn: BuildAngular
+        steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'clientapp-dist'
+              path: 'SmartHire/wwwroot'
+            displayName: 'Download Angular build into wwwroot'
+
+          - task: UseDotNet@2
+            inputs:
+              version: '8.x'
+            displayName: 'Use .NET 8 SDK'
+
+          - script: dotnet restore SmartHire/SmartHire.csproj
+            displayName: 'dotnet restore'
+
+          - script: dotnet build SmartHire/SmartHire.csproj --configuration $(buildConfiguration) --no-restore
+            displayName: 'dotnet build'
+
+          - script: dotnet publish SmartHire/SmartHire.csproj --configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/smarthire
+            displayName: 'dotnet publish'
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/smarthire'
+              artifact: 'smarthire-drop'
+            displayName: 'Publish SmartHire artifact'
+
+      - job: BuildScimProvisioning
+        displayName: 'Build ScimProvisioning.Api (.NET)'
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              version: '8.x'
+            displayName: 'Use .NET 8 SDK'
+
+          - script: dotnet restore ScimProvisioning.Api/ScimProvisioning.Api.csproj
+            displayName: 'dotnet restore'
+
+          - script: dotnet build ScimProvisioning.Api/ScimProvisioning.Api.csproj --configuration $(buildConfiguration) --no-restore
+            displayName: 'dotnet build'
+
+          - script: dotnet publish ScimProvisioning.Api/ScimProvisioning.Api.csproj --configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/scim
+            displayName: 'dotnet publish'
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/scim'
+              artifact: 'scim-drop'
+            displayName: 'Publish ScimProvisioning artifact'
+
+  - stage: Deploy
+    dependsOn: Build
+    jobs:
+      - deployment: DeploySmartHire
+        displayName: 'Deploy SmartHire to Azure App Service'
+        environment: 'dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appType: 'webApp'
+                    appName: '$(smartHireAppName)'
+                    package: '$(Pipeline.Workspace)/smarthire-drop'
+
+      - deployment: DeployScimProvisioning
+        displayName: 'Deploy ScimProvisioning.Api to Azure App Service'
+        environment: 'dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appType: 'webApp'
+                    appName: '$(scimAppName)'
+                    package: '$(Pipeline.Workspace)/scim-drop'
