@@ -29,6 +29,14 @@ stages:
             workingDirectory: 'SmartHire/ClientApp'
             displayName: 'npm install and build'
 
+          - task: PowerShell@2
+            displayName: 'List ClientApp directory (diagnostic)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "Listing SmartHire/ClientApp recursively (top 3 levels):"
+                Get-ChildItem -Path "$(Build.SourcesDirectory)/SmartHire/ClientApp" -Recurse -Depth 3 -Directory | Select-Object FullName
+
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: 'SmartHire/ClientApp/dist/ClientApp'
