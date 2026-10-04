@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - develop   # change to your dev branch name
+      - main
 
 pool:
   vmImage: 'windows-latest'
