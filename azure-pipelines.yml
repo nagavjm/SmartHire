@@ -31,7 +31,7 @@ stages:
 
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: 'SmartHire/ClientApp/dist/ClientApp/browser'
+              targetPath: 'SmartHire/ClientApp/dist/ClientApp'
               artifact: 'clientapp-dist'
             displayName: 'Publish Angular build output'
 
@@ -42,8 +42,23 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact: 'clientapp-dist'
-              path: 'SmartHire/wwwroot'
-            displayName: 'Download Angular build into wwwroot'
+              path: '$(Agent.TempDirectory)/clientapp-dist'
+            displayName: 'Download Angular build output'
+
+          - task: PowerShell@2
+            displayName: 'Copy Angular output into wwwroot'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $indexFile = Get-ChildItem -Path "$(Agent.TempDirectory)/clientapp-dist" -Recurse -Filter "index.html" | Select-Object -First 1
+                if (-not $indexFile) {
+                  Write-Error "index.html not found in downloaded Angular artifact"
+                  exit 1
+                }
+                $sourceFolder = $indexFile.DirectoryName
+                Write-Host "Found Angular output at: $sourceFolder"
+                New-Item -ItemType Directory -Force -Path "$(Build.SourcesDirectory)/SmartHire/wwwroot" | Out-Null
+                Copy-Item -Path "$sourceFolder/*" -Destination "$(Build.SourcesDirectory)/SmartHire/wwwroot" -Recurse -Force
 
           - task: UseDotNet@2
             inputs:
