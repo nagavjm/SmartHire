@@ -138,6 +138,23 @@ stages:
           runOnce:
             deploy:
               steps:
+                - checkout: self
+
+                - task: UseDotNet@2
+                  inputs:
+                    version: '8.x'
+                  displayName: 'Use .NET 8 SDK'
+
+                - script: dotnet tool install --global dotnet-ef --version 8.*
+                  displayName: 'Install dotnet-ef tool'
+
+                - script: |
+                    set PATH=%PATH%;%USERPROFILE%\.dotnet\tools
+                    dotnet ef database update --project SmartHire/SmartHire.csproj --connection "%SMARTHIRE_SQL_CONNECTION%"
+                  displayName: 'Apply SmartHire EF Core migrations'
+                  env:
+                    SMARTHIRE_SQL_CONNECTION: $(SmartHireSqlConnection)
+
                 - task: AzureWebApp@1
                   inputs:
                     azureSubscription: '$(azureSubscription)'
@@ -152,6 +169,23 @@ stages:
           runOnce:
             deploy:
               steps:
+                - checkout: self
+
+                - task: UseDotNet@2
+                  inputs:
+                    version: '8.x'
+                  displayName: 'Use .NET 8 SDK'
+
+                - script: dotnet tool install --global dotnet-ef --version 8.*
+                  displayName: 'Install dotnet-ef tool'
+
+                - script: |
+                    set PATH=%PATH%;%USERPROFILE%\.dotnet\tools
+                    dotnet ef database update --project ScimProvisioning.Api/ScimProvisioning.Api.csproj --connection "%SCIM_SQL_CONNECTION%"
+                  displayName: 'Apply ScimProvisioning EF Core migrations'
+                  env:
+                    SCIM_SQL_CONNECTION: $(ScimSqlConnection)
+
                 - task: AzureWebApp@1
                   inputs:
                     azureSubscription: '$(azureSubscription)'
