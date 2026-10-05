@@ -12,6 +12,7 @@ using SmartHire.Infrastructure.OpenAi;
 using SmartHire.Infrastructure.Options;
 using SmartHire.Infrastructure.ScimSync;
 using SmartHire.Infrastructure.Search;
+using SmartHire.Infrastructure.TextExtraction;
 using SmartHire.Middleware;
 using SmartHire.Repositories;
 using SmartHire.Services;
@@ -28,7 +29,11 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 // ---------- MVC / Swagger ----------
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -54,7 +59,13 @@ builder.Services
 // ---------- Application services ----------
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ICandidateQueryService, CandidateQueryService>();
+builder.Services.AddScoped<IResumeQueryService, ResumeQueryService>();
+builder.Services.AddScoped<IScreeningService, ScreeningService>();
+builder.Services.AddScoped<IResumeSyncService, ResumeSyncService>();
+builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
+builder.Services.AddSingleton<IResumeTextExtractor, ResumeTextExtractor>();
 builder.Services.AddSingleton<IVectorSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IOpenAiService, AzureOpenAiService>();
 builder.Services.AddHostedService<ResumeIndexingBackgroundService>();

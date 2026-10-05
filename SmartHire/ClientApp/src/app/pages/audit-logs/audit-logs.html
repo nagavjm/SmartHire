@@ -1,1 +1,21 @@
-<p>audit-logs works!</p>
+<div class="container py-4">
+  <h2 class="mb-4">Audit Logs</h2>
+
+  <div *ngIf="loading()">Loading audit logs...</div>
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <table class="table" *ngIf="!loading() && logs().length">
+    <thead>
+      <tr><th>Date</th><th>Event Type</th><th>Description</th><th>User Id</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let log of logs()">
+        <td>{{ log.createdAtUtc | date:'short' }}</td>
+        <td>{{ log.eventType }}</td>
+        <td>{{ log.description || '-' }}</td>
+        <td>{{ log.userId ?? '-' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading() && !logs().length">No audit logs found.</div>
+</div>

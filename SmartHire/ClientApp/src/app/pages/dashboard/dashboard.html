@@ -1,1 +1,33 @@
-<p>dashboard works!</p>
+<div class="container py-4">
+  <h2 class="mb-4">Dashboard</h2>
+
+  <div *ngIf="loading()">Loading summary...</div>
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <div class="row g-3" *ngIf="summary() as s">
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold">{{ s.totalResumes }}</div>
+        <div class="text-muted">Total Resumes</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold">{{ s.indexedResumes }}</div>
+        <div class="text-muted">Indexed Resumes</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold">{{ s.totalSearches }}</div>
+        <div class="text-muted">Total Searches</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold">{{ s.activeProcessingJobs }}</div>
+        <div class="text-muted">Active Jobs</div>
+      </div>
+    </div>
+  </div>
+</div>

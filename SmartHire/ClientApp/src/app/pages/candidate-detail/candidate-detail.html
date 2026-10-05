@@ -1,1 +1,21 @@
-<p>candidate-detail works!</p>
+<div class="container py-4">
+  <div *ngIf="loading()">Loading candidate...</div>
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <div *ngIf="candidate() as c">
+    <h2 class="mb-3">{{ c.candidateName }}</h2>
+    <dl class="row">
+      <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ c.email || '-' }}</dd>
+      <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">{{ c.phone || '-' }}</dd>
+      <dt class="col-sm-3">Location</dt><dd class="col-sm-9">{{ c.location || '-' }}</dd>
+      <dt class="col-sm-3">Experience</dt><dd class="col-sm-9">{{ c.totalExperienceYears ?? '-' }} years</dd>
+      <dt class="col-sm-3">Skills</dt><dd class="col-sm-9">{{ c.skills || '-' }}</dd>
+      <dt class="col-sm-3">Summary</dt><dd class="col-sm-9">{{ c.resumeSummary || '-' }}</dd>
+      <dt class="col-sm-3">Resume</dt>
+      <dd class="col-sm-9">
+        <a *ngIf="c.blobUrl" [href]="c.blobUrl" target="_blank" rel="noopener">Open resume file</a>
+        <span *ngIf="!c.blobUrl">-</span>
+      </dd>
+    </dl>
+  </div>
+</div>

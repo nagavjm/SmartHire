@@ -1,1 +1,39 @@
-<p>synchronization works!</p>
+<div class="container py-4">
+  <h2 class="mb-4">Synchronization</h2>
+
+  <div class="mb-3 d-flex gap-2">
+    <button class="btn btn-primary" [disabled]="busy()" (click)="triggerStart()">Start Sync</button>
+    <button class="btn btn-outline-secondary" [disabled]="busy()" (click)="triggerReindex()">Force Reindex</button>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <div class="card p-3 mb-4" *ngIf="latestStatus() as latest">
+    <h5>Latest Job</h5>
+    <div>Status: <strong>{{ latest.status }}</strong></div>
+    <div>Discovered: {{ latest.documentsDiscovered }} | Indexed: {{ latest.documentsIndexed }} | Failed: {{ latest.documentsFailed }}</div>
+    <div>Started: {{ latest.startedAtUtc | date:'short' }}</div>
+    <div *ngIf="latest.completedAtUtc">Completed: {{ latest.completedAtUtc | date:'short' }}</div>
+    <div *ngIf="latest.errorSummary" class="text-danger">{{ latest.errorSummary }}</div>
+  </div>
+
+  <div *ngIf="loading()">Loading job history...</div>
+  <table class="table" *ngIf="!loading() && jobs().length">
+    <thead>
+      <tr>
+        <th>ID</th><th>Status</th><th>Discovered</th><th>Indexed</th><th>Failed</th><th>Started</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let job of jobs()">
+        <td>{{ job.id }}</td>
+        <td>{{ job.status }}</td>
+        <td>{{ job.documentsDiscovered }}</td>
+        <td>{{ job.documentsIndexed }}</td>
+        <td>{{ job.documentsFailed }}</td>
+        <td>{{ job.startedAtUtc | date:'short' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading() && !jobs().length">No sync jobs have run yet.</div>
+</div>

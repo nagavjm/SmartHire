@@ -67,7 +67,37 @@
     </header>
 
     <div class="studio-body">
-      <div class="welcome-wrap">
+      <div class="chat-messages" *ngIf="messages().length">
+        @for (msg of messages(); track $index) {
+          <div class="chat-message" [class.chat-message-user]="msg.role === 'user'">
+            <p>{{ msg.text }}</p>
+            @if (msg.candidates && msg.candidates.length) {
+              <div class="candidate-results">
+                @for (c of msg.candidates; track c.resumeDocumentId) {
+                  <div class="card p-3 mb-2">
+                    <div class="d-flex justify-content-between">
+                      <strong>#{{ c.rank }} {{ c.candidateName }}</strong>
+                      <span>Score: {{ c.matchScore | number:'1.0-2' }}</span>
+                    </div>
+                    <div *ngIf="c.recommendation" class="text-muted">{{ c.recommendation }}</div>
+                    <div *ngIf="c.strengths?.length">
+                      <strong>Strengths:</strong> {{ c.strengths?.join(', ') }}
+                    </div>
+                    <div *ngIf="c.missingSkills?.length">
+                      <strong>Missing:</strong> {{ c.missingSkills?.join(', ') }}
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+        <div class="chat-message chat-message-assistant" *ngIf="loading()">
+          <p>Screening candidates...</p>
+        </div>
+      </div>
+
+      <div class="welcome-wrap" *ngIf="!messages().length">
         <div class="welcome-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2l2.2 6.8H21l-5.6 4.1 2.1 6.9L12 15.8 6.5 19.8l2.1-6.9L3 8.8h6.8L12 2z" fill="currentColor" />

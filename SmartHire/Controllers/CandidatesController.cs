@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartHire.Infrastructure.Auth;
+using SmartHire.Services;
 
 namespace SmartHire.Controllers;
 
@@ -9,11 +10,24 @@ namespace SmartHire.Controllers;
 [Authorize(Policy = AuthServiceExtensions.RequireAppAccessPolicy)]
 public class CandidatesController : ControllerBase
 {
-    // TODO: inject a candidate query service once the candidate details feature is implemented.
+    private readonly ICandidateQueryService _candidateQueryService;
+
+    public CandidatesController(ICandidateQueryService candidateQueryService)
+    {
+        _candidateQueryService = candidateQueryService;
+    }
 
     [HttpGet]
-    public IActionResult GetAll() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    {
+        var candidates = await _candidateQueryService.GetAllAsync(cancellationToken);
+        return Ok(candidates);
+    }
 
     [HttpGet("{id:int}")]
-    public IActionResult GetById(int id) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    {
+        var candidate = await _candidateQueryService.GetByIdAsync(id, cancellationToken);
+        return candidate is null ? NotFound() : Ok(candidate);
+    }
 }

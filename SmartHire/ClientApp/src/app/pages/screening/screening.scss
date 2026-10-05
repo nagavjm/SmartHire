@@ -247,6 +247,33 @@
   text-align: center;
 }
 
+.chat-messages {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat-message {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: #f1f1f4;
+  align-self: flex-start;
+  max-width: 85%;
+
+  &.chat-message-user {
+    background: #4338ca;
+    color: #fff;
+    align-self: flex-end;
+  }
+}
+
+.candidate-results {
+  margin-top: 0.5rem;
+  color: #1a1a1a;
+}
+
 .welcome-icon {
   width: 56px;
   height: 56px;

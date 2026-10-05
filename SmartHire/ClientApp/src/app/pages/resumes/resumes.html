@@ -1,1 +1,30 @@
-<p>resumes works!</p>
+<div class="container py-4">
+  <h2 class="mb-4">Resumes</h2>
+
+  <div *ngIf="loading()">Loading resumes...</div>
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <table class="table" *ngIf="!loading() && resumes().length">
+    <thead>
+      <tr><th>Name</th><th>Type</th><th>Size</th><th>Status</th><th>Last Modified</th><th>Last Indexed</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of resumes()">
+        <td>{{ r.blobName }}</td>
+        <td>{{ r.fileExtension }}</td>
+        <td>{{ (r.sizeInBytes / 1024) | number:'1.0-1' }} KB</td>
+        <td>
+          <span class="badge"
+            [class.bg-success]="r.status === 'Indexed'"
+            [class.bg-warning]="r.status === 'Pending' || r.status === 'Processing'"
+            [class.bg-danger]="r.status === 'Failed'">
+            {{ r.status }}
+          </span>
+        </td>
+        <td>{{ r.blobLastModifiedUtc | date:'short' }}</td>
+        <td>{{ r.lastIndexedAtUtc ? (r.lastIndexedAtUtc | date:'short') : '-' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading() && !resumes().length">No resumes found.</div>
+</div>

@@ -24,6 +24,12 @@ public class AzureAiSearchOptions
     public string? ApiKey { get; set; }
     public string IndexName { get; set; } = "resume-index";
     public bool UseManagedIdentity { get; set; } = false;
+
+    /// <summary>
+    /// Must match the embedding dimensions produced by AzureOpenAiOptions.EmbeddingDeploymentName
+    /// (e.g. text-embedding-3-large = 3072, text-embedding-3-small = 1536).
+    /// </summary>
+    public int VectorDimensions { get; set; } = 3072;
 }
 
 /// <summary>

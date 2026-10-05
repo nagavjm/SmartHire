@@ -1,1 +1,23 @@
-<p>candidates works!</p>
+<div class="container py-4">
+  <h2 class="mb-4">Candidates</h2>
+
+  <div *ngIf="loading()">Loading candidates...</div>
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <table class="table" *ngIf="!loading() && candidates().length">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Phone</th><th>Location</th><th>Experience (yrs)</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of candidates()">
+        <td>{{ c.candidateName }}</td>
+        <td>{{ c.email || '-' }}</td>
+        <td>{{ c.phone || '-' }}</td>
+        <td>{{ c.location || '-' }}</td>
+        <td>{{ c.totalExperienceYears ?? '-' }}</td>
+        <td><a [routerLink]="['/candidates', c.id]" class="btn btn-sm btn-outline-primary">View</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading() && !candidates().length">No candidates found.</div>
+</div>

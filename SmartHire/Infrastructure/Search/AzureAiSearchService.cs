@@ -2,6 +2,8 @@ using Azure;
 using Azure.Identity;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
+using Azure.Search.Documents.Models;
 using Microsoft.Extensions.Options;
 using SmartHire.Infrastructure.Options;
 
@@ -9,10 +11,13 @@ namespace SmartHire.Infrastructure.Search;
 
 /// <summary>
 /// Azure AI Search backed vector search implementation.
-/// NOTE: Index schema / vector profile creation to be finalized during feature implementation.
 /// </summary>
 public class AzureAiSearchService : IVectorSearchService
 {
+    private const string VectorSearchProfileName = "resume-vector-profile";
+    private const string VectorSearchAlgorithmName = "resume-hnsw-algorithm";
+    private const string VectorFieldName = "ContentVector";
+
     private readonly AzureAiSearchOptions _options;
     private readonly SearchIndexClient _indexClient;
     private readonly SearchClient _searchClient;
@@ -37,19 +42,90 @@ public class AzureAiSearchService : IVectorSearchService
         }
     }
 
-    public Task EnsureIndexExistsAsync(CancellationToken cancellationToken = default)
+    public async Task EnsureIndexExistsAsync(CancellationToken cancellationToken = default)
     {
-        // TODO: Define vector index schema (content vector field, HNSW profile) during implementation.
-        throw new NotImplementedException("Index schema creation will be implemented with the indexing feature.");
+        try
+        {
+            await _indexClient.GetIndexAsync(_options.IndexName, cancellationToken);
+            return;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Index does not exist yet - create it below.
+        }
+
+        var index = new SearchIndex(_options.IndexName)
+        {
+            Fields =
+            {
+                new SimpleField("Id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                new SimpleField("ResumeDocumentId", SearchFieldDataType.String) { IsFilterable = true },
+                new SearchableField("CandidateName") { IsFilterable = true },
+                new SearchableField("Content"),
+                new SimpleField("BlobUrl", SearchFieldDataType.String),
+                new VectorSearchField(VectorFieldName, _options.VectorDimensions, VectorSearchProfileName)
+            },
+            VectorSearch = new VectorSearch
+            {
+                Algorithms = { new HnswAlgorithmConfiguration(VectorSearchAlgorithmName) },
+                Profiles =
+                {
+                    new VectorSearchProfile(VectorSearchProfileName, VectorSearchAlgorithmName)
+                }
+            }
+        };
+
+        await _indexClient.CreateOrUpdateIndexAsync(index, cancellationToken: cancellationToken);
     }
 
-    public Task UpsertDocumentsAsync(IEnumerable<ResumeSearchDocument> documents, CancellationToken cancellationToken = default)
+    public async Task UpsertDocumentsAsync(IEnumerable<ResumeSearchDocument> documents, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Document upsert will be implemented with the indexing feature.");
+        var searchDocuments = documents
+            .Select(doc => new SearchDocument
+            {
+                ["Id"] = doc.Id,
+                ["ResumeDocumentId"] = doc.ResumeDocumentId,
+                ["CandidateName"] = doc.CandidateName,
+                ["Content"] = doc.Content,
+                ["BlobUrl"] = doc.BlobUrl,
+                [VectorFieldName] = doc.ContentVector
+            })
+            .ToList();
+
+        if (searchDocuments.Count == 0)
+        {
+            return;
+        }
+
+        var batch = IndexDocumentsBatch.MergeOrUpload(searchDocuments);
+        await _searchClient.IndexDocumentsAsync(batch, cancellationToken: cancellationToken);
     }
 
-    public Task<IReadOnlyList<VectorSearchHit>> SearchAsync(float[] queryVector, int topK = 10, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<VectorSearchHit>> SearchAsync(float[] queryVector, int topK = 10, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Vector search will be implemented with the screening feature.");
+        var searchOptions = new SearchOptions
+        {
+            VectorSearch = new VectorSearchOptions
+            {
+                Queries = { new VectorizedQuery(queryVector) { KNearestNeighborsCount = topK, Fields = { VectorFieldName } } }
+            },
+            Size = topK,
+            Select = { "ResumeDocumentId", "Content", "BlobUrl" }
+        };
+
+        var response = await _searchClient.SearchAsync<SearchDocument>(searchText: null, searchOptions, cancellationToken);
+
+        var hits = new List<VectorSearchHit>();
+        await foreach (var result in response.Value.GetResultsAsync())
+        {
+            var doc = result.Document;
+            hits.Add(new VectorSearchHit(
+                ResumeDocumentId: doc.GetString("ResumeDocumentId") ?? string.Empty,
+                Content: doc.GetString("Content") ?? string.Empty,
+                BlobUrl: doc.GetString("BlobUrl") ?? string.Empty,
+                Score: result.Score ?? 0d));
+        }
+
+        return hits;
     }
 }
