@@ -28,4 +28,21 @@ export class Candidates implements OnInit {
       },
     });
   }
+
+  getStatusBadgeClass(status?: string): string {
+    switch (status?.toLowerCase()) {
+      case 'shortlisted':
+        return 'bg-success';
+      case 'completed':
+      case 'verificationcompleted':
+        return 'bg-primary';
+      case 'failed':
+      case 'verificationfailed':
+        return 'bg-danger';
+      case 'offerreleased':
+        return 'bg-warning text-dark';
+      default:
+        return 'bg-secondary';
+    }
+  }
 }

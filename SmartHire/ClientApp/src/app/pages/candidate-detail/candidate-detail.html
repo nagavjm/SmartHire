@@ -3,7 +3,21 @@
   <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
 
   <div *ngIf="candidate() as c">
-    <h2 class="mb-3">{{ c.candidateName }}</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>{{ c.candidateName }}</h2>
+      <span class="badge fs-6" [ngClass]="getStatusBadgeClass(c.status)">Status: {{ c.status || 'New' }}</span>
+    </div>
+
+    <!-- Alert notifications for Event Grid publishing -->
+    <div *ngIf="actionSuccess()" class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Success:</strong> {{ actionSuccess() }}
+      <button type="button" class="btn-close" (click)="clearSuccess()" aria-label="Close"></button>
+    </div>
+    <div *ngIf="actionError()" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> {{ actionError() }}
+      <button type="button" class="btn-close" (click)="clearError()" aria-label="Close"></button>
+    </div>
+
     <dl class="row">
       <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ c.email || '-' }}</dd>
       <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">{{ c.phone || '-' }}</dd>
@@ -17,5 +31,54 @@
         <span *ngIf="!c.blobUrl">-</span>
       </dd>
     </dl>
+
+    <!-- Candidate Lifecycle Actions (Azure Event Grid triggers) -->
+    <div class="card mt-4 border-primary shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Candidate Lifecycle Actions (Azure Event Grid)</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Click an action below to update candidate state and publish notification events to AuthBridge via Azure Event Grid.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-success"
+            [disabled]="actionLoading() !== null"
+            (click)="onTriggerAction('CandidateShortlisted')">
+            <span *ngIf="actionLoading() === 'CandidateShortlisted'" class="spinner-border spinner-border-sm me-1"></span>
+            Shortlist Candidate
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [disabled]="actionLoading() !== null"
+            (click)="onTriggerAction('VerificationCompleted')">
+            <span *ngIf="actionLoading() === 'VerificationCompleted'" class="spinner-border spinner-border-sm me-1"></span>
+            Verification Completed
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-danger"
+            [disabled]="actionLoading() !== null"
+            (click)="onTriggerAction('VerificationFailed')">
+            <span *ngIf="actionLoading() === 'VerificationFailed'" class="spinner-border spinner-border-sm me-1"></span>
+            Verification Failed
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-warning"
+            [disabled]="actionLoading() !== null"
+            (click)="onTriggerAction('OfferReleased')">
+            <span *ngIf="actionLoading() === 'OfferReleased'" class="spinner-border spinner-border-sm me-1"></span>
+            Release Offer
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

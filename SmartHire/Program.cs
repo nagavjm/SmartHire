@@ -8,6 +8,7 @@ using SmartHire.Features;
 using SmartHire.Infrastructure.Auth;
 using SmartHire.Infrastructure.BackgroundServices;
 using SmartHire.Infrastructure.BlobStorage;
+using SmartHire.Infrastructure.EventGrid;
 using SmartHire.Infrastructure.OpenAi;
 using SmartHire.Infrastructure.Options;
 using SmartHire.Infrastructure.ScimSync;
@@ -45,6 +46,7 @@ builder.Services.AddDbContext<SmartHireDbContext>(options =>
 builder.Services.Configure<AzureBlobStorageOptions>(builder.Configuration.GetSection(AzureBlobStorageOptions.SectionName));
 builder.Services.Configure<AzureAiSearchOptions>(builder.Configuration.GetSection(AzureAiSearchOptions.SectionName));
 builder.Services.Configure<AzureOpenAiOptions>(builder.Configuration.GetSection(AzureOpenAiOptions.SectionName));
+builder.Services.Configure<EventGridSettings>(builder.Configuration.GetSection(EventGridSettings.SectionName));
 
 // ---------- Authentication (AuthBridge OIDC SSO) ----------
 builder.Services.ConfigureAuthServices(builder.Configuration, builder.Environment.IsDevelopment());
@@ -68,6 +70,8 @@ builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 builder.Services.AddSingleton<IResumeTextExtractor, ResumeTextExtractor>();
 builder.Services.AddSingleton<IVectorSearchService, AzureAiSearchService>();
 builder.Services.AddSingleton<IOpenAiService, AzureOpenAiService>();
+builder.Services.AddSingleton<IEventGridPublisher, EventGridPublisher>();
+builder.Services.AddScoped<ICandidateLifecycleService, CandidateLifecycleService>();
 builder.Services.AddHostedService<ResumeIndexingBackgroundService>();
 
 // ---------- Cross-cutting ----------

@@ -7,7 +7,8 @@ public record CandidateSummaryDto(
     string? Email,
     string? Phone,
     string? Location,
-    double? TotalExperienceYears);
+    double? TotalExperienceYears,
+    string? Status = "New");
 
 public record CandidateDetailDto(
     int Id,
@@ -19,7 +20,8 @@ public record CandidateDetailDto(
     double? TotalExperienceYears,
     string? Skills,
     string? ResumeSummary,
-    string? BlobUrl);
+    string? BlobUrl,
+    string? Status = "New");
 
 public interface ICandidateQueryService
 {

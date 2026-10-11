@@ -10,12 +10,22 @@ export interface CandidateSummary {
   phone?: string;
   location?: string;
   totalExperienceYears?: number;
+  status?: string;
 }
 
 export interface CandidateDetail extends CandidateSummary {
   skills?: string;
   resumeSummary?: string;
   blobUrl?: string;
+  status?: string;
+}
+
+export interface CandidateLifecycleActionResult {
+  success: boolean;
+  eventType: string;
+  status: string;
+  payload?: any;
+  message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,5 +38,12 @@ export class CandidatesService {
 
   getById(id: number): Observable<CandidateDetail> {
     return this.http.get<CandidateDetail>(`/api/candidates/${id}`);
+  }
+
+  triggerLifecycleAction(id: number, action: string, jobId?: string): Observable<CandidateLifecycleActionResult> {
+    return this.http.post<CandidateLifecycleActionResult>(`/api/candidates/${id}/lifecycle-action`, {
+      action,
+      jobId: jobId || 'JOB-001'
+    });
   }
 }

@@ -17,6 +17,9 @@ public class CandidateProfile
     public double? TotalExperienceYears { get; set; }
     public string? Skills { get; set; } // comma-separated or JSON array
     public string? ResumeSummary { get; set; }
+    
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? Status { get; set; }
 
     public ICollection<ScreeningResult> ScreeningResults { get; set; } = new List<ScreeningResult>();
 }
